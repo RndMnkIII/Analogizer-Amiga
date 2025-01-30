@@ -123,31 +123,32 @@ wire 			fifo_full;
 wire			fifo_empty;
 
 // We need to see what is happening right? this is sent via the UART on the Cart port
-uart_fifo uart_fifo_tx (
-	.aclr		(~reset_n),
-	.clock	(clk_mpu),
-	.data		(ser_txdata),
-	.rdreq	(ser_txgo_wire),
-	.wrreq	(ser_txgo),
-	.empty	(fifo_empty),
-	.full		(fifo_full),
-	.q			(ser_txdata_wire)
-);
+// uart_fifo uart_fifo_tx (
+// 	.aclr		(~reset_n),
+// 	.clock	(clk_mpu),
+// 	.data		(ser_txdata),
+// 	.rdreq	(ser_txgo_wire),
+// 	.wrreq	(ser_txgo),
+// 	.empty	(fifo_empty),
+// 	.full		(fifo_full),
+// 	.q			(ser_txdata_wire)
+// );
 
 assign ser_txgo_wire = ~fifo_empty && ser_txready_wire;
 
-simple_uart simple_uart (
-.clk        (clk_mpu),
-.reset      (reset_n),
-.txdata     (ser_txdata_wire),
-.txready    (ser_txready_wire),
-.txgo       (ser_txgo_wire),
-.rxdata     (ser_rxdata),
-.rxint      (ser_rxint),
-.txint      (open),
-.clock_divisor (uart_divisor),
-.rxd        (rxd),
-.txd        (txd));
+wire ser_txready_wire, ser_rxint, open;
+// simple_uart simple_uart (
+// .clk        (clk_mpu),
+// .reset      (reset_n),
+// .txdata     (ser_txdata_wire),
+// .txready    (ser_txready_wire),
+// .txgo       (ser_txgo_wire),
+// .rxdata     (ser_rxdata),
+// .rxint      (ser_rxint),
+// .txint      (open),
+// .clock_divisor (uart_divisor),
+// .rxd        (rxd),
+// .txd        (txd));
     
 // Ram controller that is duel ported so one side is on the APF bus and is addressable
 reg	littlenden;  
@@ -157,6 +158,9 @@ wire iBus_cmd_ready, iBus_cmd_valid;
 reg					interupt_mask;
 wire 					dBus_ram_ready;
 wire 					dBus_cmd_ready;
+wire iBus_rsp_valid;
+wire dBus_rsp_error;
+
 
 controller_rom 
 #(.top_address(16'h8000), // This sets the location on the APF bus to watch out for

@@ -10,12 +10,16 @@ module osd
 
 	input         clk_video,
 	input  [23:0] din,
+	input 	      hb_in,
+	input 	      vb_in,
 	input         de_in,
 	input         vs_in,
 	input         hs_in,
 	input         ce_pix_wire,
 	
 	output [23:0] dout,
+	output reg    hb_out,
+	output reg    vb_out,
 	output reg    de_out,
 	output reg    vs_out,
 	output reg    hs_out,
@@ -267,6 +271,8 @@ assign dout = rdout;
 always @(posedge clk_video) begin
 	reg [23:0] ordout1, nrdout1, rdout2, rdout3;
 	reg de1,de2,de3;
+	reg hb1,hb2,hb3;
+	reg vb1,vb2,vb3;
 	reg osd_mux;
 	reg vs1,vs2,vs3;
 	reg hs1,hs2,hs3;
@@ -285,11 +291,15 @@ always @(posedge clk_video) begin
 	rdout2  <= osd_mux ? nrdout1 : ordout1;
 	rdout3  <= rdout2;
 
+	hb1 <= hb_in; hb2 <= hb1; hb3 <= hb2;
+	vb1 <= vb_in; vb2 <= vb1; vb3 <= vb2;
 	de1 <= de_in; de2 <= de1; de3 <= de2;
 	hs1 <= hs_in; hs2 <= hs1; hs3 <= hs2;
 	vs1 <= vs_in; vs2 <= vs1; vs3 <= vs2;
 
 	rdout   <= rdout3;
+	hb_out  <= hb3;
+	vb_out  <= vb3;
 	de_out  <= de3;
 	hs_out  <= hs3;
 	vs_out  <= vs3;

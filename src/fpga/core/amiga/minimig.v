@@ -242,6 +242,7 @@ module minimig
 	output  [2:0] scanline,
 	output 	     ce_pix,
 	output  [1:0] res,
+	output reg    ntsc2,
 
 	//audio
 	output [14:0] ldata,       // left DAC data
@@ -423,7 +424,11 @@ assign memcfg = {memory_config[6:0]};
 assign cachecfg = {cachecfg_pre[2], ~ovl, ~ovl};
 
 // NTSC/PAL switching is controlled by OSD menu, change requires reset to take effect
-always @(posedge clk) if (clk7_en && reset) ntsc <= chipset_config[1];
+always @(posedge clk) if (clk7_en && reset) begin
+	 ntsc <= chipset_config[1];
+end
+
+always @(posedge clk) ntsc2 <= ntsc;
 
 assign ide_ena  = ide_config[0];
 assign ide_fast = ~ide_config[5] & cpucfg[1];

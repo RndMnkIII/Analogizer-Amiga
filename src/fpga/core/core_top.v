@@ -249,40 +249,60 @@ assign bridge_endian_little = 0;
 
 // cart is unused, so set all level translators accordingly
 // directions are 0:IN, 1:OUT
-assign cart_tran_bank3 = 8'hzz;            // these pins are not used, make them inputs
- assign cart_tran_bank3_dir = 1'b0;
+// assign cart_tran_bank3 = 8'hzz;            // these pins are not used, make them inputs
+//  assign cart_tran_bank3_dir = 1'b0;
  
- assign cart_tran_bank2 = 8'hzz;            // these pins are not used, make them inputs
- assign cart_tran_bank2_dir = 1'b0;
- assign cart_tran_bank1 = 8'hzz;            // these pins are not used, make them inputs
- assign cart_tran_bank1_dir = 1'b0;
+//  assign cart_tran_bank2 = 8'hzz;            // these pins are not used, make them inputs
+//  assign cart_tran_bank2_dir = 1'b0;
+//  assign cart_tran_bank1 = 8'hzz;            // these pins are not used, make them inputs
+//  assign cart_tran_bank1_dir = 1'b0;
  
- assign cart_tran_bank0 = {1'b0, TXDATA, LED, 1'b0};    // LED and TXD hook up here
- assign cart_tran_bank0_dir = 1'b1;
+//  assign cart_tran_bank0 = {1'b0, TXDATA, LED, 1'b0};    // LED and TXD hook up here
+//  assign cart_tran_bank0_dir = 1'b1;
  
- assign cart_tran_pin30 = 1'bz;            // this pin is not used, make it an input
- assign cart_tran_pin30_dir = 1'b0;
- assign cart_pin30_pwroff_reset = 1'b1;    
+//  assign cart_tran_pin30 = 1'bz;            // this pin is not used, make it an input
+//  assign cart_tran_pin30_dir = 1'b0;
+//  assign cart_pin30_pwroff_reset = 1'b1;    
  
- assign cart_tran_pin31 = 1'bz;            // this pin is an input
- assign cart_tran_pin31_dir = 1'b0;        // input
- // UART
- wire TXDATA;                        // your UART transmit data hooks up here
- wire RXDATA = cart_tran_pin31;        // your UART RX data shows up here
+//  assign cart_tran_pin31 = 1'bz;            // this pin is an input
+//  assign cart_tran_pin31_dir = 1'b0;        // input
+//  // UART
+//  wire TXDATA;                        // your UART transmit data hooks up here
+//  wire RXDATA = cart_tran_pin31;        // your UART RX data shows up here
  
- // button/LED
- wire LED;                    // LED hooks up here.  HIGH = light up, LOW = off
- wire BUTTON = cart_tran_bank3[0];    // button data comes out here.  LOW = pressed, HIGH = unpressed
+//  // button/LED
+//  wire LED;                    // LED hooks up here.  HIGH = light up, LOW = off
+//  wire BUTTON = cart_tran_bank3[0];    // button data comes out here.  LOW = pressed, HIGH = unpressed
 
 // link port is unused, set to input only to be safe
 // each bit may be bidirectional in some applications
 //assign port_tran_so = 1'bz;
-assign port_tran_so_dir = 1'b1;     // SO is output only
-//assign port_tran_si = 1'bz;
+// assign port_tran_so_dir = 1'b1;     // SO is output only
+// //assign port_tran_si = 1'bz;
+// assign port_tran_si_dir = 1'b0;     // SI is input only
+// //assign port_tran_sck = 1'bz;
+// assign port_tran_sck_dir = 1'b0;    // clock direction can change
+// //assign port_tran_sd = 1'bz;
+// assign port_tran_sd_dir = 1'b0;     // SD is input and not used
+
+//Analogizer uses LINK port to debug UART and LED.
+ // UART
+ wire TXDATA;                        // your UART transmit data hooks up here
+ wire RXDATA = port_tran_sd;        // your UART RX data shows up here
+ 
+ // button/LED
+ wire LED;                    // LED hooks up here.  HIGH = light up, LOW = off
+ wire BUTTON;    // button data comes out here.  LOW = pressed, HIGH = unpressed
+ assign port_tran_so = 1'bz; //PAULA rs232 trans
+ assign port_tran_so_dir = 1'b1;     // SO is output only
+
+assign port_tran_si = 1'bz; //PAULA rs232 receive
 assign port_tran_si_dir = 1'b0;     // SI is input only
-//assign port_tran_sck = 1'bz;
-assign port_tran_sck_dir = 1'b0;    // clock direction can change
-//assign port_tran_sd = 1'bz;
+
+assign port_tran_sck = TXDATA;
+assign port_tran_sck_dir = 1'b1;    // clock direction can change OUTPUT
+
+assign port_tran_sd = 1'bz;
 assign port_tran_sd_dir = 1'b0;     // SD is input and not used
 
 // tie off the rest of the pins we are not using
@@ -347,13 +367,15 @@ always @(*) begin
     32'hF8xxxxxx: begin
         bridge_rd_data <= cmd_bridge_rd_data;
     end
+	32'hF7xxxxxx: begin
+        bridge_rd_data <= analogizer_bridge_rd_data; //Analogizer configuration word
+    end
 	 default : begin
 		bridge_rd_data <= mpu_ram_bridge_rd_data;
 	 end
     endcase
 end
 
-//
 // host/target command handler
 //
     wire            reset_n;                // driven by host commands, can be used as core-wide reset
@@ -595,11 +617,11 @@ wire        ide_f_led;
 //wire        ide_f_irq;
 wire  [5:0] ide_f_req;
 wire [15:0] ide_f_readdata;
-	wire [15:0] JOY0  =  CORE_OUTPUT[4] ? 'b0 : {cont1_key_s[14], cont1_key_s[9], cont1_key_s[8], cont1_key_s[7], cont1_key_s[6], 
-								 cont1_key_s[5],  cont1_key_s[4], cont1_key_s[0], cont1_key_s[1], cont1_key_s[2], cont1_key_s[3]};
+	wire [15:0] JOY0  =  CORE_OUTPUT[4] ? 'b0 : {p1_controls[14], p1_controls[9], p1_controls[8], p1_controls[7], p1_controls[6], 
+								 p1_controls[5],  p1_controls[4], p1_controls[0], p1_controls[1], p1_controls[2], p1_controls[3]};
 	// joystick 2 [fire4,fire3,fire2,fire,up,down,left,right] (default joystick port)
-	wire [15:0] JOY1 = 	CORE_OUTPUT[5] ? 'b0 : {cont2_key_s[14], cont2_key_s[9], cont2_key_s[8], cont2_key_s[7], cont2_key_s[6], 
-								 cont2_key_s[5],  cont2_key_s[4], cont2_key_s[0], cont2_key_s[1], cont2_key_s[2], cont2_key_s[3]};
+	wire [15:0] JOY1 = 	CORE_OUTPUT[5] ? 'b0 : {p2_controls[14], p2_controls[9], p2_controls[8], p2_controls[7], p2_controls[6], 
+								 p2_controls[5],  p2_controls[4], p2_controls[0], p2_controls[1], p2_controls[2], p2_controls[3]};
 	wire [15:0] JOY2;// = {16{joystick_enable[2]}} & {cont1_key[7], cont1_key[6], cont1_key[4], cont1_key[5], cont1_key[0], cont1_key[1], cont1_key[2], cont1_key[3]};
 	wire [15:0] JOY3;// = {16{joystick_enable[3]}} & {cont1_key[7], cont1_key[6], cont1_key[4], cont1_key[5], cont1_key[0], cont1_key[1], cont1_key[2], cont1_key[3]};
 	wire [15:0] JOYA0;
@@ -787,18 +809,22 @@ substitute_mcu_apf_mister substitute_mcu_apf_mister(
 		.bridge_wr              		( bridge_wr ),
 		.bridge_wr_data         		( bridge_wr_data ),
 	  
-	   // Debugging to the Cart	
-		.rxd									( RXDATA ),
-		.txd									( TXDATA ),
+	   // Debugging to the Cart	, FOR ANALOGIZER using pins SD,SC
+		.rxd									( RXDATA ), //SD
+		.txd									( TXDATA ), //SC
 		
 		// APF Controller access if required
 		
-		.cont1_key          				( cont1_key ),
-		.cont2_key          				( cont2_key ),
+		// .cont1_key          				( cont1_key ),
+		.cont1_key          				( p1_controls ),
+		// .cont2_key          				( cont2_key ),
+		.cont2_key          				( p2_controls ),
 		.cont3_key          				( cont3_key ),
 		.cont4_key          				( cont4_key ),
-		.cont1_joy          				( cont1_joy ),
-		.cont2_joy          				( cont2_joy ),
+		// .cont1_joy          				( cont1_joy ),
+		// .cont2_joy          				( cont2_joy ),
+		.cont1_joy          				( p1_joystick   ),
+		.cont2_joy          				( p2_joystick    ),
 		.cont3_joy          				( cont3_joy ),
 		.cont4_joy          				( cont4_joy ),
 		.cont1_trig         				( cont1_trig ),
@@ -852,7 +878,7 @@ wire        hs;
 wire  [1:0] ar;
 wire [7:0] red, green, blue, r,g,b;
 wire lace, field1;
-wire hblank_i, vblank_i, vbl, fx;
+wire hblank_i, vblank_i, fx;
 wire  [1:0] res;
 
 wire  [1:0] 	cpu_state;
@@ -865,6 +891,7 @@ wire 	pwr_led;
 wire [9:0]  ldata_okk;     // left DAC data  (PWM vol version)
 wire [9:0]  rdata_okk;     // right DAC data (PWM vol version)
 wire ide_c_led;
+wire ntsc_ena;
 minimig minimig
 (
 	.reset_n		  				(reset_n),
@@ -910,8 +937,8 @@ minimig minimig
 	._joy2        				(~JOY1            ), // joystick 2 [fire4,fire3,fire2,fire,up,down,left,right] (default joystick port)
 	._joy3        				(~JOY2            ), // joystick 1 [fire4,fire3,fire2,fire,up,down,left,right]
 	._joy4        				(~JOY3            ), // joystick 2 [fire4,fire3,fire2,fire,up,down,left,right]
-	.joya1        				(cont1_joy_s[15:0]  ),
-	.joya2        				(cont2_joy_s[15:0]  ),
+	.joya1        				(p1_joystick[15:0]  ),
+	.joya2        				(p2_joystick[15:0]  ),
 	.mouse_btn    				(mouse_buttons ), // mouse buttons
 	.kbd_mouse_data 			(kbd_mouse_data ), // mouse direction data, keycodes
 	.kbd_mouse_type 			(kbd_mouse_type ), // type of data
@@ -947,6 +974,7 @@ minimig minimig
 	.scanline     				(fx               ),
 	.ce_pix     				(ce_pix           ),
 	.res          				(res              ),
+	.ntsc2                      (ntsc_ena         ),
 
 	//audio
 	.ldata        				(ldata            ), // left DAC data
@@ -1098,6 +1126,11 @@ cpu_wrapper cpu_wrapper
 	wire 				vs_buf = vs;
 	wire 				hblank_i_buf = hblank_i;
 	wire 				vblank_i_buf = vblank_i;
+
+	//Analogizer can intercept color data to blank the Pocket screen while Analogizer ouput is active
+	// wire [7:0]		r_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : r; 
+	// wire [7:0]		g_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : g;
+	// wire [7:0]		b_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : b;	
 	wire [7:0]		r_buf = r; 
 	wire [7:0]		g_buf = g;
 	wire [7:0]		b_buf = b;	
@@ -1134,25 +1167,99 @@ Analogue_video_encoder Analogue_video_encoder(
 	.video_skip						( video_skip				)
 );
 
-osd osd
-(
-	.clk_sys		(clk_sys),
+//start of OSD switcher
+//detects a long press of 2 seconds of SELECT+START buttons in game controllers P1 or P2.
+// wire detection_done;
+// two_button_press_detector alternate_osd_output(
+//     .clk            (clk_sys), // System clock at 28.375160 MHz
+//     .reset          (~reset_n), // Reset signal
+//     .button1        (p1_controls[15]|p2_controls[15]), // First button input
+//     .button2        (p1_controls[14]|p2_controls[14]), // Second button input
+//     .detection_done (detection_done) // Output signal when both buttons are pressed for 2 seconds
+// );
 
-	.io_osd		(io_osd),
-	.io_strobe	(io_strobe),
-	.io_din		(io_din),
-	.clk_video	(video_rgb_clock),
-	.din			(video_rgb_reg),
-	.hs_in		(video_hs_i_reg),
-	.vs_in		(video_vs_i_reg),
-	.de_in		(video_de_reg),
-	.ce_pix_wire(ce_pix),
+// always @(posedge clk_sys) begin
+// 	if (detection_done) begin
+// 		// Cada vez que se detecta la pulsación, se cambia la salida del OSD
+// 		analogizer_osd_out <= ~analogizer_osd_out; 
+// 	end
+// end
 
-	.dout			(video_rgb),
-	.hs_out		(video_hs),
-	.vs_out		(video_vs),
-	.de_out		(video_de)
-);
+
+
+
+// wire [23:0] video_rgb_osd;
+// wire 		video_hs_osd;
+// wire 		video_vs_osd;
+// wire 		video_hb_osd;
+// wire 		video_vb_osd;
+// wire 		video_de_osd;
+
+// osd osd
+// (
+// 	.clk_sys	(clk_114), //clk_sys
+
+// 	.io_osd		(io_osd),
+// 	.io_strobe	(io_strobe),
+// 	.io_din		(io_din),
+// 	.clk_video	(analogizer_osd_out ? clk_114 : video_rgb_clock),
+// 	.din		(analogizer_osd_out ? {r_buf,g_buf,b_buf} : video_rgb_reg),
+// 	.hb_in		(analogizer_osd_out ? ~hde : 1'b0),
+// 	.vb_in		(analogizer_osd_out ? ~vde : 1'b0),
+// 	.hs_in		(analogizer_osd_out ? ~hs : video_hs_i_reg),
+// 	.vs_in		(analogizer_osd_out ? ~vs : video_vs_i_reg),
+// 	.de_in		(analogizer_osd_out ? ANALOGIZER_DE : video_de_reg),
+// 	.ce_pix_wire(analogizer_osd_out ? ce_pix_scandoubler : ce_pix),
+
+// 	.dout		(video_rgb_osd),
+// 	.hs_out		(video_hs_osd),
+// 	.vs_out		(video_vs_osd),
+// 	.hb_out     (video_hb_osd), //only used by Analogizer
+// 	.vb_out	    (video_vb_osd), //only used by Analogizer
+// 	.de_out		(video_de_osd)
+// );
+
+
+// osd osd
+// (
+// 	.clk_sys		(clk_sys),
+
+// 	.io_osd		(io_osd),
+// 	.io_strobe	(io_strobe),
+// 	.io_din		(io_din),
+// 	.clk_video	(video_rgb_clock),
+// 	.din			(video_rgb_reg),
+// 	.hs_in		(video_hs_i_reg),
+// 	.vs_in		(video_vs_i_reg),
+// 	.de_in		(video_de_reg),
+// 	.ce_pix_wire(ce_pix),
+
+// 	.dout			(video_rgb),
+// 	.hs_out		(video_hs),
+// 	.vs_out		(video_vs),
+// 	.de_out		(video_de)
+// );
+
+// //Pocket video output
+// assign video_rgb = ~analogizer_osd_out ? video_rgb_osd : video_rgb_reg;
+// assign video_hs  = ~analogizer_osd_out ? video_hs_osd  : video_hs_i_reg;
+// assign video_vs  = ~analogizer_osd_out ? video_vs_osd  : video_vs_i_reg;
+// assign video_de  = ~analogizer_osd_out ? video_de_osd  : video_de_reg;
+assign video_rgb = video_rgb_reg;
+assign video_hs  = video_hs_i_reg;
+assign video_vs  = video_vs_i_reg;
+assign video_de  = video_de_reg;
+
+// //Analogizer video output
+// assign video_rgb_analogizer = analogizer_osd_out ? video_rgb_osd : {r_buf,g_buf,b_buf};
+// assign video_hs_analogizer  = analogizer_osd_out ? video_hs_osd  : ~hs;
+// assign video_vs_analogizer  = analogizer_osd_out ? video_vs_osd  : ~vs;                
+// assign ANALOGIZER_DE2       = analogizer_osd_out ? video_de_osd  : ANALOGIZER_DE;       
+// assign video_hb_analogizer  = analogizer_osd_out ? video_hb_osd  : ~hde;      
+// assign video_vb_analogizer  = analogizer_osd_out ? video_vb_osd  : ~vde;               
+// //end of OSD switcher
+
+
 
 wire flt_en    = CORE_OUTPUT[1] && pwr_led;
 wire aud_1200  = CORE_OUTPUT[2];
@@ -1162,27 +1269,29 @@ wire [15:0] paula_smp_l = (paula_pwm ? {ldata_okk[8:0], 7'b0} : {ldata[14:0], 1'
 wire [15:0] paula_smp_r = (paula_pwm ? {rdata_okk[8:0], 7'b0} : {rdata[14:0], 1'b0});
 
 // LPF 4400Hz, 1st order, 6db/oct
-wire [15:0] lpf4400_l, lpf4400_r;
-IIR_filter #(0) lpf4400
-(
-	.clk(clk_sys),
-	.reset(~cpu_rst | ~cpu_nrst_out ),
+// wire [15:0] lpf4400_l, lpf4400_r;
+// IIR_filter #(0) lpf4400
+// (
+// 	.clk(clk_sys),
+// 	.reset(~cpu_rst | ~cpu_nrst_out ),
 
-	.ce(clk7_en | clk7n_en),
-	.sample_ce(1),
+// 	.ce(clk7_en | clk7n_en),
+// 	.sample_ce(1),
 
-	.cx (40'd4304835800),
-	.cx0(1),
-	.cy0(-2088941),
+// 	.cx (40'd4304835800),
+// 	.cx0(1),
+// 	.cy0(-2088941),
 	
-	.input_l(paula_smp_l),
-	.input_r(paula_smp_r),
-	.output_l(lpf4400_l),
-	.output_r(lpf4400_r)
-);
+// 	.input_l(paula_smp_l),
+// 	.input_r(paula_smp_r),
+// 	.output_l(lpf4400_l),
+// 	.output_r(lpf4400_r)
+// );
 
-wire [15:0] audm_l = aud_1200 ? paula_smp_l : lpf4400_l;
-wire [15:0] audm_r = aud_1200 ? paula_smp_r : lpf4400_r;
+// wire [15:0] audm_l = aud_1200 ? paula_smp_l : lpf4400_l;
+// wire [15:0] audm_r = aud_1200 ? paula_smp_r : lpf4400_r;
+wire [15:0] audm_l = paula_smp_l;
+wire [15:0] audm_r = paula_smp_r;
 
 // LPF 3000Hz 1st + 3400Hz 1st
 wire [15:0] lpf3275_l, lpf3275_r;
@@ -1255,5 +1364,413 @@ i2s i2s (
 .audio_lrck		(audio_lrck)
 
 );
+
+/*[ANALOGIZER_HOOK_START]*/
+//*** Analogizer Interface V1.1 ***
+
+//Map SNAC controller inputs to the Pocket controls
+wire [15:0] p1_btn, p2_btn;
+wire [31:0] p1_joy, p2_joy;
+reg [31:0] p1_joystick, p2_joystick;
+reg [31:0] p1_controls, p2_controls, p3_controls, p4_controls;
+
+//Supported game controller types
+localparam GC_DISABLED        = 5'h0;
+localparam GC_DB15            = 5'h1;
+localparam GC_NES             = 5'h2;
+localparam GC_SNES            = 5'h3;
+localparam GC_PCE_2BTN        = 5'h4;
+localparam GC_PCE_6BTN        = 5'h5;
+localparam GC_PCE_MULTITAP    = 5'h6;
+localparam GC_DB15_FAST       = 5'h9;
+localparam GC_SNES_SWAP       = 5'hB;
+localparam GC_PSX             = 5'h10; //16 PSX 125KHz
+localparam GC_PSX_FAST        = 5'h11; //17 PSX 250KHz
+localparam GC_PSX_ANALOG      = 5'h12; //16 PSX 125KHz
+localparam GC_PSX_ANALOG_FAST = 5'h13; //17 PSX 250KHz
+
+always @(posedge clk_sys) begin
+    if(snac_game_cont_type == 5'h0) begin //SNAC is disabled
+                  p1_controls <= cont1_key_s;
+				  p1_joystick <= cont1_joy_s;
+                  p2_controls <= cont2_key_s;
+				  p2_joystick <= cont2_joy_s;
+    end
+    else begin
+      case(snac_cont_assignment)
+      4'h0:    begin  //SNAC P1 -> Pocket P1
+	  			//0x13 PSX SNAC Analog -> 0x3 See: https://www.analogue.co/developer/docs/bus-communication#PAD
+				//0xXX another SANC	-> 0x2
+                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
+				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+                  p2_controls <= cont2_key_s;
+				  p2_joystick <= cont2_joy_s;
+
+                end
+      4'h1:    begin  //SNAC P1 -> Pocket P2
+                  p1_controls <= cont1_key_s;
+				  p1_joystick <= cont1_joy_s;
+                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
+				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+				  
+
+                end
+      4'h2:    begin //SNAC P1 -> Pocket P1, SNAC P2 -> Pocket P2
+                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
+				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p2_btn} : {{4'h2},{12'h0},p2_btn};
+				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p2_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+
+                end
+      4'h3:    begin //SNAC P1 -> Pocket P2, SNAC P2 -> Pocket P1
+                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p2_btn} : {{4'h2},{12'h0},p2_btn};
+				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p2_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
+				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+
+                end
+	  //4'h4:  //SNAC P1-P2 -> Pocket P3-P4
+	  //4'h5:  //SNAC P1-P4 -> Pocket P1-P4
+      default: begin 
+					  p1_controls <= cont1_key_s;
+					  p1_joystick <= cont1_joy_s;
+					  p2_controls <= cont2_key_s;
+					  p2_joystick <= cont2_joy_s;
+               end
+      endcase
+    end
+  end
+
+// SET PAL and NTSC TIMING and pass through status bits. ** YC must be enabled in the qsf file **
+wire [39:0] CHROMA_PHASE_INC;
+wire PALFLAG;
+
+// adjusted for 113.500640 video clock
+localparam [39:0] NTSC_PHASE_INC = 40'd34676027815; // ((NTSC_REF * 2^40) / CLK_VIDEO_NTSC)
+localparam [39:0] PAL_PHASE_INC  = 40'd42949672960;  // ((PAL_REF * 2^40) / CLK_VIDEO_PAL)
+
+// Send Parameters to Y/C Module
+//assign CHROMA_PHASE_INC = (analogizer_video_type == 4'h4) || (analogizer_video_type == 4'hC) ? PAL_PHASE_INC : NTSC_PHASE_INC; 
+assign CHROMA_PHASE_INC = PALFLAG ? PAL_PHASE_INC : NTSC_PHASE_INC;
+assign PALFLAG = (analogizer_video_type == 4'h4) || ~ntsc_ena; 
+//assign PALFLAG = 1'b1;
+//wire SYNC = ~^{hs_buf, vs_buf};
+
+
+//Scandoubler video settings
+reg ce_out = 0;
+always @(posedge clk_114) begin
+	reg [3:0] div;
+	reg [3:0] add;
+	reg [1:0] fs_res;
+	reg old_vs;
+	
+	div <= div + add;
+	if(~hblank_i_buf & ~vblank2) fs_res <= fs_res | res;
+
+	old_vs <= vs;
+	if(old_vs & ~vs) begin
+		fs_res <= 0;
+		div <= 0;
+		add <= 1; // 7MHz
+		if(fs_res[0]) add <= 2; // 14MHz
+		if(fs_res[1] | (~scandoubler)) add <= 4; // 28MHz
+	end
+
+	ce_out <= div[3] & !div[2:0];
+end
+
+wire ce_pix_scandoubler = ce_out;
+
+wire scandoubler = 1'b1 & ~lace;
+
+// Analog video output settings
+reg  hde;
+wire vde = ~(fvbl | svbl);
+wire vblank2 = vblank_i | ~vs;
+reg  fhbl, fvbl, shbl, svbl;
+wire hbl = fhbl | shbl | ~hs;
+
+wire sset;
+wire [11:0] shbl_l, shbl_r;
+wire [11:0] svbl_t, svbl_b;
+
+reg  [11:0] hbl_l=0, hbl_r=0;
+reg  [11:0] hsta, hend, hmax, hcnt;
+reg  [11:0] hsize;
+always @(posedge clk_sys) begin
+	reg old_hs;
+	reg old_hblank;
+
+	old_hs <= hs;
+	old_hblank <= hblank_i;
+
+	hcnt <= hcnt + 1'd1;
+	if(~hs) hcnt <= 0;
+
+	if(old_hblank & ~hblank_i) hend <= hcnt;
+	if(~old_hblank & hblank_i) hsta <= hcnt;
+	if(old_hs & ~hs)         hmax <= hcnt;
+
+	if(hcnt == hend+hbl_l-2'd2) shbl <= 0;
+	if(hcnt == hsta+hbl_r-2'd2) shbl <= 1;
+
+	//force hblank_i
+	if(hcnt == 8)         fhbl <= 0;
+	if(hcnt == hmax-4'd8) fhbl <= 1;
+	
+	if(~old_hblank & hblank_i & ~field1 & (vcnt == 1'd1)) hsize <= hcnt - hend;
+end
+
+reg [11:0] vbl_t=0, vbl_b=0;
+reg [11:0] vend, vmax, f1_vend, f1_vsize, vcnt, vs_end;
+reg [11:0] vsize;
+always @(posedge clk_sys) begin
+	reg old_vs;
+	reg old_vblank, old_hs, old_hbl;
+
+	old_vs <= vs;
+	old_hs <= hs;
+	old_vblank <= vblank_i;
+	
+	if(old_hs & ~hs) vcnt <= vcnt + 1'd1;
+	if(~old_vblank & vblank2) vcnt <= 0;
+
+	if(~lace | ~field1) begin
+		if(old_vblank & ~vblank2) vend <= vcnt;
+		if(~old_vs & vs)         vs_end <= vcnt;
+		
+		if(~old_vblank & vblank2) begin
+			vmax <= vcnt;
+			vsize <= vcnt - vend + f1_vsize;
+			f1_vsize <= 0;
+		end
+	end
+	else begin
+		if(old_vblank & ~vblank2) f1_vend <= vcnt;
+		if(~old_vblank & vblank2) begin
+			f1_vsize <= vcnt - f1_vend;
+		end
+	end
+
+	old_hbl <= hbl;
+	if((old_hbl & ~hbl) | !vcnt) begin
+		if(vcnt == vend+vbl_t) svbl <= 0;
+		if(vcnt == (vbl_b[11] ? vmax+vbl_b : vbl_b) ) svbl <= 1;
+
+		//force vblank2
+		if(vcnt == vmax-1)    fvbl <= 1;
+		if(vcnt == vs_end+2)  fvbl <= 0;
+	end
+	
+	hde <= ~hbl;
+end
+
+always @(posedge clk_sys) begin
+	reg old_level;
+	reg alt = 0;
+
+	old_level <= kbd_mouse_level;
+	if((old_level ^ kbd_mouse_level) && (kbd_mouse_type==3)) begin
+		if(kbd_mouse_data == 'h41) begin //backspace
+			vbl_t <= 0; vbl_b <= 0;
+			hbl_l <= 0; hbl_r <= 0;
+		end
+		else if(kbd_mouse_data == 'h4c) begin //up
+			if(alt) vbl_b <= vbl_b + 1'd1;
+			else    vbl_t <= vbl_t + 1'd1;
+		end
+		else if(kbd_mouse_data == 'h4d) begin //down
+			if(alt) vbl_b <= vbl_b - 1'd1;
+			else    vbl_t <= vbl_t - 1'd1;
+		end
+		else if(kbd_mouse_data == 'h4f) begin //left
+			if(alt) hbl_r <= hbl_r + 3'd4;
+			else    hbl_l <= hbl_l + 3'd4;
+		end
+		else if(kbd_mouse_data == 'h4e) begin //right
+			if(alt) hbl_r <= hbl_r - 3'd4;
+			else    hbl_l <= hbl_l - 3'd4;
+		end
+		else if(kbd_mouse_data == 'h64 || kbd_mouse_data == 'h65) begin //alt press
+			alt <= 1;
+		end
+		else if(kbd_mouse_data == 'hE4 || kbd_mouse_data == 'hE5) begin //alt release
+			alt <= 0;
+		end
+	end
+	
+	if(sset) begin
+		vbl_t <= svbl_t; vbl_b <= svbl_b;
+		hbl_l <= shbl_l; hbl_r <= shbl_r;
+	end
+end
+
+
+reg [11:0] scr_hbl_l, scr_hbl_r;
+reg [11:0] scr_vbl_t, scr_vbl_b;
+reg [11:0] scr_hsize, scr_vsize;
+reg  [1:0] scr_res;
+reg  [6:0] scr_flg;
+
+always @(posedge clk_sys) begin
+	reg old_vblank;
+
+	old_vblank <= vblank2;
+	if(old_vblank & ~vblank2) begin
+		scr_hbl_l <= hbl_l;
+		scr_hbl_r <= hbl_r;
+		scr_vbl_t <= vbl_t;
+		scr_vbl_b <= vbl_b;
+		scr_hsize <= hsize;
+		scr_vsize <= vsize;
+		scr_res   <= res;
+
+		if(scr_res != res || scr_vsize != vsize || scr_hsize != hsize) scr_flg <= scr_flg + 1'd1;
+	end
+end
+
+
+	wire [23:0] video_rgb_analogizer;
+	wire 		video_hs_analogizer;
+	wire 		video_vs_analogizer;
+	wire 		video_hb_analogizer;
+	wire 		video_vb_analogizer;
+	wire 		ANALOGIZER_DE2;
+
+osd osd_analogizer
+(
+	.clk_sys	(clk_114),
+
+	.io_osd		(io_osd),
+	.io_strobe	(io_strobe),
+	.io_din		(io_din),
+	.clk_video	(clk_114),
+	.hb_in		(~hde),
+	.vb_in		(~vde),
+	.din		({r_buf,g_buf,b_buf}),
+	.hs_in		(~hs),
+	.vs_in		(~vs),
+	.de_in		(ANALOGIZER_DE),
+	.ce_pix_wire(ce_pix_scandoubler),
+
+	.dout		(video_rgb_analogizer),
+	.hs_out		(video_hs_analogizer),
+	.vs_out		(video_vs_analogizer),
+	.hb_out		(video_hb_analogizer),
+	.vb_out		(video_vb_analogizer),
+	.de_out		(ANALOGIZER_DE2),
+);
+
+
+//Configuration file data
+reg [31:0] analogizer_bridge_rd_data;
+reg [31:0] analogizer_config = 0;
+wire    [31:0]   analogizer_config_s;
+synch_3 #(.WIDTH(32)) analogizer_sync(analogizer_config, analogizer_config_s, clk_sys);
+
+// handle memory mapped I/O from pocket
+always @(posedge clk_74a) begin
+    if(bridge_wr) begin
+        case(bridge_addr[31:24])
+        8'hF7: begin
+            analogizer_config <= bridge_wr_data; //{bridge_wr_data[7:0],bridge_wr_data[15:8],bridge_wr_data[23:16],bridge_wr_data[31:24]}; //read inverted byte order
+        end
+        endcase
+    end
+    if(bridge_rd) begin
+        case(bridge_addr[31:24])
+        8'hF7: begin
+            analogizer_bridge_rd_data <= analogizer_config_s; //{analogizer_config_s[7:0],analogizer_config_s[15:8],analogizer_config_s[23:16],analogizer_config_s[31:24]}; //invert byte order to writeback to the Sav folders
+        end
+        endcase
+        
+    end
+end
+
+  always @(*) begin
+    snac_game_cont_type   = analogizer_config_s[4:0];
+    snac_cont_assignment  = analogizer_config_s[9:6];
+    analogizer_video_type = analogizer_config_s[13:10];
+	//analogizer_ena		  = analogizer_config_s[5];	
+	//pocket_blank_screen   = analogizer_config_s[14];
+	//analogizer_osd_out	  = analogizer_config_s[15];
+  end
+
+reg analogizer_ena;
+reg [3:0] analogizer_video_type;
+reg [4:0] snac_game_cont_type ;
+reg [3:0] snac_cont_assignment ;
+reg [2:0] SC_fx;
+reg pocket_blank_screen;
+reg analogizer_osd_out;
+
+always @(posedge clk_sys) begin
+	if(analogizer_video_type >= 4'd5) SC_fx <= analogizer_video_type - 4'd5;
+    // case (analogizer_video_type)
+    //     4'd5:    SC_fx <= 3'd0; //SC 0%
+	// 	4'd6:    SC_fx <= 3'd1; //SC 25%
+    //     4'd7:    SC_fx <= 3'd2; //SC 50%
+    //     4'd8:    SC_fx <= 3'd3; //SC 75%
+	// 	4'd9:    SC_fx <= 3'd4; //HQ2X
+    //     default: SC_fx <= 3'd0;
+    // endcase
+end
+
+wire ANALOGIZER_CSYNC = ~^{video_hs_analogizer, video_vs_analogizer};
+wire ANALOGIZER_DE = ~(~hde || ~vde);
+
+//113.500640
+openFPGA_Pocket_Analogizer #(.MASTER_CLK_FREQ(113_500_640), .LINE_LENGTH(2000)) analogizer (
+	.i_clk(clk_114),
+	.i_rst(~reset_n), //i_rst is active high
+	.i_ena(1'b1), //analogizer_ena
+	//Video interface
+    .video_clk(clk_114),
+	.analog_video_type(analogizer_video_type),
+    .R(video_rgb_analogizer[23:16]), //8-bit RGB
+	.G(video_rgb_analogizer[15:8]),
+	.B(video_rgb_analogizer[7:0]),
+    .Hblank(video_hb_analogizer),
+    .Vblank(video_vb_analogizer),
+    .BLANKn(ANALOGIZER_DE2),
+    .Hsync(video_hs_analogizer),
+	.Vsync(video_vs_analogizer),
+    .Csync(ANALOGIZER_CSYNC), //composite SYNC on HSync.
+    //Video Y/C Encoder interface
+    .CHROMA_PHASE_INC(CHROMA_PHASE_INC),
+    .PALFLAG(PALFLAG),
+    //Video SVGA Scandoubler interface
+    .ce_pix(ce_pix_scandoubler), //ce_pix  
+	.scandoubler(scandoubler), //logic for disable/enable the scandoubler
+	.fx(SC_fx), //0 disable, 1 scanlines 25%, 2 scanlines 50%, 3 scanlines 75%, 4 HQ2x
+	//SNAC interface
+	.conf_AB(snac_game_cont_type >= 5'd16),              //PSX
+	.game_cont_type(snac_game_cont_type), //0-15 Conf. A, 16-31 Conf. B
+	.p1_btn_state(p1_btn),
+    .p1_joy_state(p1_joy),
+	.p2_btn_state(p2_btn),  
+    .p2_joy_state(p2_joy),
+    .p3_btn_state(),
+	.p4_btn_state(),    
+	//Pocket Analogizer IO interface to the Pocket cartridge port
+	.cart_tran_bank2(cart_tran_bank2),
+	.cart_tran_bank2_dir(cart_tran_bank2_dir),
+	.cart_tran_bank3(cart_tran_bank3),
+	.cart_tran_bank3_dir(cart_tran_bank3_dir),
+	.cart_tran_bank1(cart_tran_bank1),
+	.cart_tran_bank1_dir(cart_tran_bank1_dir),
+	.cart_tran_bank0(cart_tran_bank0),
+	.cart_tran_bank0_dir(cart_tran_bank0_dir),
+	.cart_tran_pin30(cart_tran_pin30),
+	.cart_tran_pin30_dir(cart_tran_pin30_dir),
+	.cart_pin30_pwroff_reset(cart_pin30_pwroff_reset),
+	.cart_tran_pin31(cart_tran_pin31),
+	.cart_tran_pin31_dir(cart_tran_pin31_dir),
+	//debug
+	.o_stb()
+);
+/*[ANALOGIZER_HOOK_END]*/
     
 endmodule
+

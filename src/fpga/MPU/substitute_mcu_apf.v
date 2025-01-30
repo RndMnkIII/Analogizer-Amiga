@@ -126,6 +126,9 @@ wire        ser_txgo_wire;
 
 wire 			fifo_full;
 wire			fifo_empty;
+wire ser_txready_wire;
+wire ser_rxint;
+wire open;
 
 // We need to see what is happening right? this is sent via the UART on the Cart port
 uart_fifo uart_fifo_tx (
@@ -170,6 +173,8 @@ wire         [23:0]     bram_address;
 wire         [3:0]      bram_mask;
 wire         [31:0]     bram_data_out;
 wire         [31:0]     bram_data_in;
+wire iBus_rsp_valid;
+
 
 controller_rom 
 #(.address_size (5'd14) //Address lines for the memory array
@@ -232,6 +237,7 @@ assign mem_la_write	= dBus_cmd_valid &&  dBus_cmd_payload_wr;
 
 
 // CPU Core
+wire dBus_rsp_error;
 	
    VexRiscv cpu(
 		.clk						(clk_mpu), 
