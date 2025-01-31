@@ -1128,12 +1128,12 @@ cpu_wrapper cpu_wrapper
 	wire 				vblank_i_buf = vblank_i;
 
 	//Analogizer can intercept color data to blank the Pocket screen while Analogizer ouput is active
-	// wire [7:0]		r_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : r; 
-	// wire [7:0]		g_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : g;
-	// wire [7:0]		b_buf = pocket_blank_screen && analogizer_ena ? 8'h0 : b;	
-	wire [7:0]		r_buf = r; 
-	wire [7:0]		g_buf = g;
-	wire [7:0]		b_buf = b;	
+	wire [7:0]		r_buf = pocket_blank_screen ? 8'h0 : r; 
+	wire [7:0]		g_buf = pocket_blank_screen ? 8'h0 : g;
+	wire [7:0]		b_buf = pocket_blank_screen ? 8'h0 : b;	
+	// wire [7:0]		r_buf = r; 
+	// wire [7:0]		g_buf = g;
+	// wire [7:0]		b_buf = b;	
 
 Analogue_video_encoder Analogue_video_encoder(
 	.clk_74a							( clk_74a					),
@@ -1188,36 +1188,36 @@ Analogue_video_encoder Analogue_video_encoder(
 
 
 
-// wire [23:0] video_rgb_osd;
-// wire 		video_hs_osd;
-// wire 		video_vs_osd;
-// wire 		video_hb_osd;
-// wire 		video_vb_osd;
-// wire 		video_de_osd;
+wire [23:0] video_rgb_osd;
+wire 		video_hs_osd;
+wire 		video_vs_osd;
+wire 		video_hb_osd;
+wire 		video_vb_osd;
+wire 		video_de_osd;
 
-// osd osd
-// (
-// 	.clk_sys	(clk_114), //clk_sys
+osd osd
+(
+	.clk_sys	(clk_114), //clk_sys
 
-// 	.io_osd		(io_osd),
-// 	.io_strobe	(io_strobe),
-// 	.io_din		(io_din),
-// 	.clk_video	(analogizer_osd_out ? clk_114 : video_rgb_clock),
-// 	.din		(analogizer_osd_out ? {r_buf,g_buf,b_buf} : video_rgb_reg),
-// 	.hb_in		(analogizer_osd_out ? ~hde : 1'b0),
-// 	.vb_in		(analogizer_osd_out ? ~vde : 1'b0),
-// 	.hs_in		(analogizer_osd_out ? ~hs : video_hs_i_reg),
-// 	.vs_in		(analogizer_osd_out ? ~vs : video_vs_i_reg),
-// 	.de_in		(analogizer_osd_out ? ANALOGIZER_DE : video_de_reg),
-// 	.ce_pix_wire(analogizer_osd_out ? ce_pix_scandoubler : ce_pix),
+	.io_osd		(io_osd),
+	.io_strobe	(io_strobe),
+	.io_din		(io_din),
+	.clk_video	(analogizer_osd_out ? clk_114 : video_rgb_clock),
+	.din		(analogizer_osd_out ? {r,g,b} : video_rgb_reg),
+	.hb_in		(analogizer_osd_out ? ~hde : 1'b0),
+	.vb_in		(analogizer_osd_out ? ~vde : 1'b0),
+	.hs_in		(analogizer_osd_out ? ~hs : video_hs_i_reg),
+	.vs_in		(analogizer_osd_out ? ~vs : video_vs_i_reg),
+	.de_in		(analogizer_osd_out ? ANALOGIZER_DE : video_de_reg),
+	.ce_pix_wire(analogizer_osd_out ? ce_pix_scandoubler : ce_pix),
 
-// 	.dout		(video_rgb_osd),
-// 	.hs_out		(video_hs_osd),
-// 	.vs_out		(video_vs_osd),
-// 	.hb_out     (video_hb_osd), //only used by Analogizer
-// 	.vb_out	    (video_vb_osd), //only used by Analogizer
-// 	.de_out		(video_de_osd)
-// );
+	.dout		(video_rgb_osd),
+	.hs_out		(video_hs_osd),
+	.vs_out		(video_vs_osd),
+	.hb_out     (video_hb_osd), //only used by Analogizer
+	.vb_out	    (video_vb_osd), //only used by Analogizer
+	.de_out		(video_de_osd)
+);
 
 
 // osd osd
@@ -1241,22 +1241,24 @@ Analogue_video_encoder Analogue_video_encoder(
 // );
 
 // //Pocket video output
-// assign video_rgb = ~analogizer_osd_out ? video_rgb_osd : video_rgb_reg;
-// assign video_hs  = ~analogizer_osd_out ? video_hs_osd  : video_hs_i_reg;
-// assign video_vs  = ~analogizer_osd_out ? video_vs_osd  : video_vs_i_reg;
-// assign video_de  = ~analogizer_osd_out ? video_de_osd  : video_de_reg;
-assign video_rgb = video_rgb_reg;
-assign video_hs  = video_hs_i_reg;
-assign video_vs  = video_vs_i_reg;
-assign video_de  = video_de_reg;
+assign video_rgb = ~analogizer_osd_out ? video_rgb_osd : video_rgb_reg;
+assign video_hs  = ~analogizer_osd_out ? video_hs_osd  : video_hs_i_reg;
+assign video_vs  = ~analogizer_osd_out ? video_vs_osd  : video_vs_i_reg;
+assign video_de  = ~analogizer_osd_out ? video_de_osd  : video_de_reg;
+
+
+// assign video_rgb = video_rgb_reg;
+// assign video_hs  = video_hs_i_reg;
+// assign video_vs  = video_vs_i_reg;
+// assign video_de  = video_de_reg;
 
 // //Analogizer video output
-// assign video_rgb_analogizer = analogizer_osd_out ? video_rgb_osd : {r_buf,g_buf,b_buf};
-// assign video_hs_analogizer  = analogizer_osd_out ? video_hs_osd  : ~hs;
-// assign video_vs_analogizer  = analogizer_osd_out ? video_vs_osd  : ~vs;                
-// assign ANALOGIZER_DE2       = analogizer_osd_out ? video_de_osd  : ANALOGIZER_DE;       
-// assign video_hb_analogizer  = analogizer_osd_out ? video_hb_osd  : ~hde;      
-// assign video_vb_analogizer  = analogizer_osd_out ? video_vb_osd  : ~vde;               
+assign video_rgb_analogizer = analogizer_osd_out ? video_rgb_osd : {r,g,b};
+assign video_hs_analogizer  = analogizer_osd_out ? video_hs_osd  : ~hs;
+assign video_vs_analogizer  = analogizer_osd_out ? video_vs_osd  : ~vs;                
+assign ANALOGIZER_DE2       = analogizer_osd_out ? video_de_osd  : ANALOGIZER_DE;       
+assign video_hb_analogizer  = analogizer_osd_out ? video_hb_osd  : ~hde;      
+assign video_vb_analogizer  = analogizer_osd_out ? video_vb_osd  : ~vde;               
 // //end of OSD switcher
 
 
@@ -1375,21 +1377,27 @@ reg [31:0] p1_joystick, p2_joystick;
 reg [31:0] p1_controls, p2_controls, p3_controls, p4_controls;
 
 //Supported game controller types
-localparam GC_DISABLED        = 5'h0;
-localparam GC_DB15            = 5'h1;
-localparam GC_NES             = 5'h2;
-localparam GC_SNES            = 5'h3;
-localparam GC_PCE_2BTN        = 5'h4;
-localparam GC_PCE_6BTN        = 5'h5;
-localparam GC_PCE_MULTITAP    = 5'h6;
-localparam GC_DB15_FAST       = 5'h9;
-localparam GC_SNES_SWAP       = 5'hB;
-localparam GC_PSX             = 5'h10; //16 PSX 125KHz
-localparam GC_PSX_FAST        = 5'h11; //17 PSX 250KHz
-localparam GC_PSX_ANALOG      = 5'h12; //16 PSX 125KHz
-localparam GC_PSX_ANALOG_FAST = 5'h13; //17 PSX 250KHz
+// localparam GC_DISABLED        = 5'h0;
+// localparam GC_DB15            = 5'h1;
+// localparam GC_NES             = 5'h2;
+// localparam GC_SNES            = 5'h3;
+// localparam GC_PCE_2BTN        = 5'h4;
+// localparam GC_PCE_6BTN        = 5'h5;
+// localparam GC_PCE_MULTITAP    = 5'h6;
+// localparam GC_DB15_FAST       = 5'h9;
+// localparam GC_SNES_SWAP       = 5'hB;
+// localparam GC_PSX             = 5'h10; //16 PSX 125KHz
+// localparam GC_PSX_FAST        = 5'h11; //17 PSX 250KHz
+// localparam GC_PSX_ANALOG      = 5'h12; //16 PSX 125KHz
+// localparam GC_PSX_ANALOG_FAST = 5'h13; //17 PSX 250KHz
+
+wire snac_is_analog = (snac_game_cont_type == 5'h12) || (snac_game_cont_type == 5'h13);
+wire [31:0] neutral_joystick = 32'h80808080;
 
 always @(posedge clk_sys) begin
+	reg [31:0] p1_pocket_btn, p1_pocket_joy;
+	reg [31:0] p2_pocket_btn, p2_pocket_joy;
+
     if(snac_game_cont_type == 5'h0) begin //SNAC is disabled
                   p1_controls <= cont1_key_s;
 				  p1_joystick <= cont1_joy_s;
@@ -1397,45 +1405,47 @@ always @(posedge clk_sys) begin
 				  p2_joystick <= cont2_joy_s;
     end
     else begin
-      case(snac_cont_assignment)
-      4'h0:    begin  //SNAC P1 -> Pocket P1
+	  p1_pocket_btn <= snac_is_analog ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
+	  p1_pocket_joy <= snac_is_analog ? p1_joy : neutral_joystick; 
+	  p2_pocket_btn <= snac_is_analog ? {{4'h3},{12'h0},p2_btn} : {{4'h2},{12'h0},p2_btn};
+	  p2_pocket_joy <= snac_is_analog ? p2_joy : neutral_joystick;
+
+      case(snac_cont_assignment[1:0])
+      2'h0:    begin  //SNAC P1 -> Pocket P1
 	  			//0x13 PSX SNAC Analog -> 0x3 See: https://www.analogue.co/developer/docs/bus-communication#PAD
 				//0xXX another SANC	-> 0x2
-                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
-				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
-                  p2_controls <= cont2_key_s;
-				  p2_joystick <= cont2_joy_s;
+				p1_controls <= p1_pocket_btn;
+				p1_joystick <= p1_pocket_joy; //check for PSX Analog SNAC or return neutral position data
+				p2_controls <= cont2_key_s;
+				p2_joystick <= cont2_joy_s;
+                end
+      2'h1:    begin  //SNAC P1 -> Pocket P2
+				p1_controls <= cont1_key_s;
+				p1_joystick <= cont1_joy_s;
+				p2_controls <= p1_pocket_btn;
+				p2_joystick <= p1_pocket_joy; //check for PSX Analog SNAC or return neutral position data
+                end
+      2'h2:    begin //SNAC P1 -> Pocket P1, SNAC P2 -> Pocket P2
+				p1_controls <= p1_pocket_btn;
+				p1_joystick <= p1_pocket_joy; //check for PSX Analog SNAC or return neutral position data
+				p2_controls <= p2_pocket_btn;
+				p2_joystick <= p2_pocket_joy; //check for PSX Analog SNAC or return neutral position data
 
                 end
-      4'h1:    begin  //SNAC P1 -> Pocket P2
-                  p1_controls <= cont1_key_s;
-				  p1_joystick <= cont1_joy_s;
-                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
-				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
-				  
-
-                end
-      4'h2:    begin //SNAC P1 -> Pocket P1, SNAC P2 -> Pocket P2
-                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
-				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
-                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p2_btn} : {{4'h2},{12'h0},p2_btn};
-				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p2_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
-
-                end
-      4'h3:    begin //SNAC P1 -> Pocket P2, SNAC P2 -> Pocket P1
-                  p1_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p2_btn} : {{4'h2},{12'h0},p2_btn};
-				  p1_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? p2_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
-                  p2_controls <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG ? {{4'h3},{12'h0},p1_btn} : {{4'h2},{12'h0},p1_btn};
-				  p2_joystick <= snac_game_cont_type == GC_PSX_ANALOG_FAST || GC_PSX_ANALOG  ? p1_joy : 32'h80808080; //check for PSX Analog SNAC or return neutral position data
+      2'h3:    begin //SNAC P1 -> Pocket P2, SNAC P2 -> Pocket P1
+				p1_controls <= p2_pocket_btn;
+				p1_joystick <= p2_pocket_joy; //check for PSX Analog SNAC or return neutral position data
+				p2_controls <= p1_pocket_btn;
+				p2_joystick <= p1_pocket_joy; //check for PSX Analog SNAC or return neutral position data
 
                 end
 	  //4'h4:  //SNAC P1-P2 -> Pocket P3-P4
 	  //4'h5:  //SNAC P1-P4 -> Pocket P1-P4
       default: begin 
-					  p1_controls <= cont1_key_s;
-					  p1_joystick <= cont1_joy_s;
-					  p2_controls <= cont2_key_s;
-					  p2_joystick <= cont2_joy_s;
+				p1_controls <= cont1_key_s;
+				p1_joystick <= cont1_joy_s;
+				p2_controls <= cont2_key_s;
+				p2_joystick <= cont2_joy_s;
                end
       endcase
     end
@@ -1638,29 +1648,29 @@ end
 	wire 		video_vb_analogizer;
 	wire 		ANALOGIZER_DE2;
 
-osd osd_analogizer
-(
-	.clk_sys	(clk_114),
+// osd osd_analogizer
+// (
+// 	.clk_sys	(clk_114),
 
-	.io_osd		(io_osd),
-	.io_strobe	(io_strobe),
-	.io_din		(io_din),
-	.clk_video	(clk_114),
-	.hb_in		(~hde),
-	.vb_in		(~vde),
-	.din		({r_buf,g_buf,b_buf}),
-	.hs_in		(~hs),
-	.vs_in		(~vs),
-	.de_in		(ANALOGIZER_DE),
-	.ce_pix_wire(ce_pix_scandoubler),
+// 	.io_osd		(io_osd),
+// 	.io_strobe	(io_strobe),
+// 	.io_din		(io_din),
+// 	.clk_video	(clk_114),
+// 	.hb_in		(~hde),
+// 	.vb_in		(~vde),
+// 	.din		({r,g,b}),
+// 	.hs_in		(~hs),
+// 	.vs_in		(~vs),
+// 	.de_in		(ANALOGIZER_DE),
+// 	.ce_pix_wire(ce_pix_scandoubler),
 
-	.dout		(video_rgb_analogizer),
-	.hs_out		(video_hs_analogizer),
-	.vs_out		(video_vs_analogizer),
-	.hb_out		(video_hb_analogizer),
-	.vb_out		(video_vb_analogizer),
-	.de_out		(ANALOGIZER_DE2),
-);
+// 	.dout		(video_rgb_analogizer),
+// 	.hs_out		(video_hs_analogizer),
+// 	.vs_out		(video_vs_analogizer),
+// 	.hb_out		(video_hb_analogizer),
+// 	.vb_out		(video_vb_analogizer),
+// 	.de_out		(ANALOGIZER_DE2),
+// );
 
 
 //Configuration file data
@@ -1674,27 +1684,27 @@ always @(posedge clk_74a) begin
     if(bridge_wr) begin
         case(bridge_addr[31:24])
         8'hF7: begin
-            analogizer_config <= bridge_wr_data; //{bridge_wr_data[7:0],bridge_wr_data[15:8],bridge_wr_data[23:16],bridge_wr_data[31:24]}; //read inverted byte order
+            analogizer_config <= {bridge_wr_data[7:0],bridge_wr_data[15:8],bridge_wr_data[23:16],bridge_wr_data[31:24]}; //read inverted byte order
         end
         endcase
     end
     if(bridge_rd) begin
         case(bridge_addr[31:24])
         8'hF7: begin
-            analogizer_bridge_rd_data <= analogizer_config_s; //{analogizer_config_s[7:0],analogizer_config_s[15:8],analogizer_config_s[23:16],analogizer_config_s[31:24]}; //invert byte order to writeback to the Sav folders
+            analogizer_bridge_rd_data <= {analogizer_config_s[7:0],analogizer_config_s[15:8],analogizer_config_s[23:16],analogizer_config_s[31:24]}; //invert byte order to writeback to the Sav folders
         end
         endcase
         
     end
 end
-
+//
   always @(*) begin
     snac_game_cont_type   = analogizer_config_s[4:0];
     snac_cont_assignment  = analogizer_config_s[9:6];
     analogizer_video_type = analogizer_config_s[13:10];
 	//analogizer_ena		  = analogizer_config_s[5];	
-	//pocket_blank_screen   = analogizer_config_s[14];
-	//analogizer_osd_out	  = analogizer_config_s[15];
+	pocket_blank_screen   = analogizer_config_s[14];
+    analogizer_osd_out	  = analogizer_config_s[15];
   end
 
 reg analogizer_ena;

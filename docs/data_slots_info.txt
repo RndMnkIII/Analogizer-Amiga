@@ -1,0 +1,37 @@
+//data slot to use SAV (and Assets?) folder for a rewritable file for Amiga Analogizer core:
+Assets\analogizer\common\analogizer.bin
+Saves\analogizer\common\analogizer.bin
+
+
+========== Cores\Mazamars312.Amiga_Analogizer\data.json =========
+      {
+          "name": "Analogizer config",
+          "id": 330,
+          "required": false,
+          "parameters": "0x1000004",
+          "size_maximum": 4,
+          "filename": "analogizer.bin",
+          "extensions": [
+              "bin"
+          ],
+          "address": "0xF7000000",
+          "nonvolatile": true
+      },  
+
+
+//data slot to use Assets folder for a readonly file for Amiga Analogizer core:
+Assets\analogizer\common\analogizer.bin
+
+========== Cores\Mazamars312.Amiga_Analogizer\data.json =========
+    {
+        "name": "Analogizer config",
+        "id": 330,
+        "required": false,
+        "parameters": "0x1000000",
+        "filename": "analogizer.bin",
+        "extensions": [
+            "bin"
+        ],
+        "address": "0xF7000000",
+        "nonvolatile": false
+    }

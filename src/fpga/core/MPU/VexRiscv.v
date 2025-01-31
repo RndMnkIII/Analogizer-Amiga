@@ -4375,7 +4375,7 @@ module StreamFifoLowLatency (
   wire                when_Stream_l1196;
   wire                when_Stream_l1209;
   wire       [0:0]    ptrDif;
-  (* ram_style = "distributed" *) reg [32:0] ram [0:1];
+  (* ram_style = "M10K" *) reg [32:0] ram [0:1];
 
   assign _zz_ram_port = {io_push_payload_inst,io_push_payload_error};
   assign _zz_ram_port0 = ram[popPtr_value];
