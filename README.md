@@ -1,7 +1,7 @@
 Analogizer Amiga Core for the Analogue Pocket:
 ==============================================
 * [0.3.1] **Analogizer** support added by **RndMnkIII** and based on **mazamars312** Analogue Pocket - Commodore Amiga - 0.2.1. See more in the Analogizer main repository: [Analogizer](https://github.com/RndMnkIII/Analogizer) [31/01/2025].
-
+* [0.3.2] fixed `data.json`. Thx to **@joshcampbell191**.
 
 This Analogizer core is the first to use a configuration file to select Analogizer adapter options, not based on the Pocket's menu system. It is necessary to run an external  [utility](https://github.com/RndMnkIII/AnalogizerConfigurator)  to generate such a file. Once generated, you must copy the `analogizer.bin` file to the `/Assets/analogizer/common` folder on the Pocket SD card. If this folder does not exist, you must create it or if you have already extracted the Amiga core distribution file it will be created.
 
